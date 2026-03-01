@@ -12,6 +12,10 @@ $page_title = "Payment Management";
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['record_payment'])) {
+        if (!canEdit()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('payments.php');
+        }
         $tenant_id = $_POST['tenant_id'];
         $amount_paid = sanitize($_POST['amount_paid']);
         $payment_month = $_POST['payment_month'];
@@ -31,6 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("INSERT INTO payments (tenant_id, amount_paid, payment_month, payment_date, balance, receipt_number) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([$tenant_id, $amount_paid, $payment_month, $payment_date, $balance, $receipt_number]);
+            
+            // Log activity
+            $tenant_name = $pdo->query("SELECT full_name FROM tenants WHERE id = $tenant_id")->fetchColumn();
+            logActivity($pdo, $_SESSION['admin_id'], 'Record Payment', "Recorded payment of " . number_format($amount_paid) . " TSH for tenant: $tenant_name (Receipt: $receipt_number)");
+            
             setFlash('success', 'Payment recorded successfully! Receipt: ' . $receipt_number);
         } catch (PDOException $e) {
             setFlash('danger', 'Error recording payment: ' . $e->getMessage());
@@ -38,10 +47,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['delete_payment'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('payments.php');
+        }
         $id = $_POST['payment_id'];
         try {
+            // Get info for logging before deleting
+            $payInfo = $pdo->query("SELECT p.amount_paid, t.full_name FROM payments p JOIN tenants t ON p.tenant_id = t.id WHERE p.id = $id")->fetch();
+            
             $stmt = $pdo->prepare("DELETE FROM payments WHERE id = ?");
             $stmt->execute([$id]);
+            
+            if ($payInfo) {
+                logActivity($pdo, $_SESSION['admin_id'], 'Delete Payment', "Deleted payment record of " . number_format($payInfo['amount_paid']) . " TSH for tenant: " . $payInfo['full_name']);
+            }
+            
             setFlash('success', 'Payment record deleted successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error deleting payment: ' . $e->getMessage());
@@ -61,9 +82,11 @@ include '../includes/header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Payments</h2>
+    <?php if (canEdit()): ?>
     <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#recordPaymentModal">
         <i class="fas fa-plus me-2"></i> Record New Payment
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive table-glass">
@@ -101,11 +124,13 @@ include '../includes/header.php';
                             <a href="../reports/receipt.php?id=<?php echo $payment['id']; ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-print"></i>
                             </a>
+                            <?php if (canManage()): ?>
                             <button class="btn btn-sm btn-outline-danger delete-btn" 
                                     data-id="<?php echo $payment['id']; ?>"
                                     data-receipt="<?php echo $payment['receipt_number']; ?>">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

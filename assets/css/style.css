@@ -169,3 +169,10 @@ body {
     margin-bottom: 1rem;
     border: 3px solid var(--primary-color);
 }
+
+.btn-xs {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    border-radius: 6px;
+}

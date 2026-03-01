@@ -31,7 +31,21 @@ $settings = $pdo->query("SELECT * FROM settings WHERE id = 1")->fetch();
 
 // Handle Communication Actions (SMS, Email, WhatsApp)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tenant_id = $_POST['tenant_id'];
+    if (isset($_POST['type'])) { // Sending a message
+        if (!canEdit()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('center.php');
+        }
+    }
+    
+    if (isset($_POST['delete_log'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('center.php');
+        }
+    }
+
+    $tenant_id = $_POST['tenant_id'] ?? null;
     $message = sanitize($_POST['message']);
     $type = $_POST['type']; // 'sms', 'email', 'whatsapp'
 
@@ -80,6 +94,7 @@ include '../includes/header.php';
 
 <div class="row">
     <div class="col-md-4">
+        <?php if (canEdit()): ?>
         <div class="card shadow-sm border-0 rounded-4">
             <div class="card-body">
                 <h5 class="fw-bold mb-4">Message Templates</h5>
@@ -107,9 +122,15 @@ include '../includes/header.php';
                 </div>
             </div>
         </div>
+        <?php else: ?>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i> Only Editors and Managers can send notifications.
+        </div>
+        <?php endif; ?>
     </div>
 
     <div class="col-md-8">
+        <?php if (canEdit()): ?>
         <div class="card shadow-sm border-0 rounded-4 mb-4">
             <div class="card-body">
                 <h5 class="fw-bold mb-4">Send New Notification</h5>
@@ -199,6 +220,7 @@ include '../includes/header.php';
                 </form>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="card shadow-sm border-0 rounded-4">
             <div class="card-body">
@@ -242,6 +264,7 @@ include '../includes/header.php';
                                                     data-date="<?php echo date('d M Y, H:i', strtotime($log['dt'])); ?>">
                                                 <i class="fas fa-eye"></i>
                                             </button>
+                                            <?php if (canManage()): ?>
                                             <form action="" method="POST" onsubmit="return confirm('Delete this log?');" style="display:inline;">
                                                 <input type="hidden" name="log_id" value="<?php echo $log['id']; ?>">
                                                 <input type="hidden" name="log_type" value="<?php echo $log['type']; ?>">
@@ -249,6 +272,7 @@ include '../includes/header.php';
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

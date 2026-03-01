@@ -12,6 +12,10 @@ $page_title = "House Management";
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_house'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('houses.php');
+        }
         $house_number = sanitize($_POST['house_number']);
         $rent_amount = sanitize($_POST['rent_amount']);
         $description = sanitize($_POST['description']);
@@ -20,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("INSERT INTO houses (house_number, rent_amount, status, description) VALUES (?, ?, ?, ?)");
             $stmt->execute([$house_number, $rent_amount, $status, $description]);
+            logActivity($pdo, $_SESSION['admin_id'], 'Add House', "Created new house: $house_number");
             setFlash('success', 'House added successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error adding house: ' . $e->getMessage());
@@ -27,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['edit_house'])) {
+        if (!canEdit()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('houses.php');
+        }
         $id = $_POST['house_id'];
         $house_number = sanitize($_POST['house_number']);
         $rent_amount = sanitize($_POST['rent_amount']);
@@ -36,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("UPDATE houses SET house_number = ?, rent_amount = ?, status = ?, description = ? WHERE id = ?");
             $stmt->execute([$house_number, $rent_amount, $status, $description, $id]);
+            logActivity($pdo, $_SESSION['admin_id'], 'Edit House', "Updated details for house: $house_number (ID: $id)");
             setFlash('success', 'House updated successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error updating house: ' . $e->getMessage());
@@ -43,10 +53,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['delete_house'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('houses.php');
+        }
         $id = $_POST['house_id'];
         try {
+            $house_number = $pdo->query("SELECT house_number FROM houses WHERE id = $id")->fetchColumn();
+            
             $stmt = $pdo->prepare("DELETE FROM houses WHERE id = ?");
             $stmt->execute([$id]);
+            
+            logActivity($pdo, $_SESSION['admin_id'], 'Delete House', "Deleted house: $house_number");
             setFlash('success', 'House deleted successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error deleting house: This house might have tenants assigned.');
@@ -64,9 +82,11 @@ include '../includes/header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Houses</h2>
+    <?php if (canManage()): ?>
     <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addHouseModal">
         <i class="fas fa-plus me-2"></i> Add New House
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive table-glass">
@@ -97,6 +117,7 @@ include '../includes/header.php';
                         </td>
                         <td><?php echo $house['description'] ?: '-'; ?></td>
                         <td class="text-end">
+                            <?php if (canEdit()): ?>
                             <button class="btn btn-sm btn-outline-primary edit-btn" 
                                     data-bs-toggle="modal" 
                                     data-bs-target="#editHouseModal"
@@ -107,11 +128,14 @@ include '../includes/header.php';
                                     data-description="<?php echo $house['description']; ?>">
                                 <i class="fas fa-edit"></i>
                             </button>
+                            <?php endif; ?>
+                            <?php if (canManage()): ?>
                             <button class="btn btn-sm btn-outline-danger delete-btn" 
                                     data-id="<?php echo $house['id']; ?>"
                                     data-number="<?php echo $house['house_number']; ?>">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

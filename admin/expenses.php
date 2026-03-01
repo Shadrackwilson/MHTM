@@ -12,6 +12,10 @@ $page_title = "Expense Management";
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_expense'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('expenses.php');
+        }
         $category = sanitize($_POST['category']);
         $house_id = $_POST['house_id'] ?: null;
         $amount = sanitize($_POST['amount']);
@@ -21,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("INSERT INTO expenses (category, house_id, amount, expense_date, description) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$category, $house_id, $amount, $expense_date, $description]);
+            logActivity($pdo, $_SESSION['admin_id'], 'Add Expense', "Recorded expense: $category of " . number_format($amount) . " TSH");
             setFlash('success', 'Expense recorded successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error adding expense: ' . $e->getMessage());
@@ -28,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['edit_expense'])) {
+        if (!canEdit()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('expenses.php');
+        }
         $id = $_POST['expense_id'];
         $category = sanitize($_POST['category']);
         $house_id = $_POST['house_id'] ?: null;
@@ -38,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("UPDATE expenses SET category = ?, house_id = ?, amount = ?, expense_date = ?, description = ? WHERE id = ?");
             $stmt->execute([$category, $house_id, $amount, $expense_date, $description, $id]);
+            logActivity($pdo, $_SESSION['admin_id'], 'Edit Expense', "Updated expense ID: $id ($category)");
             setFlash('success', 'Expense updated successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error updating expense: ' . $e->getMessage());
@@ -45,10 +55,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['delete_expense'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('expenses.php');
+        }
         $id = $_POST['expense_id'];
         try {
+            $expInfo = $pdo->query("SELECT category, amount FROM expenses WHERE id = $id")->fetch();
+            
             $stmt = $pdo->prepare("DELETE FROM expenses WHERE id = ?");
             $stmt->execute([$id]);
+            
+            if ($expInfo) {
+                logActivity($pdo, $_SESSION['admin_id'], 'Delete Expense', "Deleted expense: " . $expInfo['category'] . " of " . number_format($expInfo['amount']) . " TSH");
+            }
             setFlash('success', 'Expense record deleted successfully!');
         } catch (PDOException $e) {
             setFlash('danger', 'Error deleting expense: ' . $e->getMessage());
@@ -70,9 +90,11 @@ include '../includes/header.php';
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Expenses</h2>
+    <?php if (canManage()): ?>
     <button class="btn btn-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
         <i class="fas fa-plus me-2"></i> Add New Expense
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="table-responsive table-glass">
@@ -101,6 +123,7 @@ include '../includes/header.php';
                         <td class="text-danger fw-bold"><?php echo formatCurrency($expense['amount']); ?> TSH</td>
                         <td><?php echo $expense['description'] ?: '-'; ?></td>
                         <td class="text-end">
+                            <?php if (canEdit()): ?>
                             <button class="btn btn-sm btn-outline-primary edit-btn" 
                                     data-bs-toggle="modal" 
                                     data-bs-target="#editExpenseModal"
@@ -112,12 +135,15 @@ include '../includes/header.php';
                                     data-description="<?php echo $expense['description']; ?>">
                                 <i class="fas fa-edit"></i>
                             </button>
+                            <?php endif; ?>
+                            <?php if (canManage()): ?>
                             <button class="btn btn-sm btn-outline-danger delete-btn" 
                                     data-id="<?php echo $expense['id']; ?>"
                                     data-category="<?php echo $expense['category']; ?>"
                                     data-amount="<?php echo $expense['amount']; ?>">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

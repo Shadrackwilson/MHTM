@@ -120,7 +120,9 @@ include '../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0">Payment History</h5>
+                    <?php if (canEdit()): ?>
                     <a href="payments.php?tenant_id=<?php echo $id; ?>" class="btn btn-primary btn-sm">Record Payment</a>
+                    <?php endif; ?>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -168,6 +170,7 @@ include '../includes/header.php';
                     <div class="card-body">
                         <h5 class="fw-bold mb-3">Send Communication</h5>
                         <div class="d-flex gap-2">
+                             <?php if (canEdit()): ?>
                              <a href="../communication/center.php?action=sms&tenant_id=<?php echo $id; ?>" class="btn btn-outline-primary flex-grow-1">
                                 <i class="fas fa-sms me-2"></i> SMS
                              </a>
@@ -177,6 +180,7 @@ include '../includes/header.php';
                              <a href="../communication/center.php?action=whatsapp&tenant_id=<?php echo $id; ?>" class="btn btn-outline-success flex-grow-1">
                                 <i class="fab fa-whatsapp me-2"></i> WhatsApp
                              </a>
+                             <?php endif; ?>
                              <a href="../reports/contract.php?id=<?php echo $id; ?>" class="btn btn-outline-secondary flex-grow-1" target="_blank">
                                 <i class="fas fa-file-contract me-2"></i> Contract
                              </a>

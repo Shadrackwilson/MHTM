@@ -116,4 +116,45 @@ function sendWhatsApp($phone, $message, $token) {
     // Call Meta WhatsApp Cloud API here
     return true;
 }
+/**
+ * Log Admin Activity
+ */
+function logActivity($pdo, $admin_id, $action, $details) {
+    try {
+        $stmt = $pdo->prepare("INSERT INTO activity_logs (admin_id, action, details) VALUES (?, ?, ?)");
+        $stmt->execute([$admin_id, $action, $details]);
+    } catch (PDOException $e) {
+        // Silently fail logging if error
+    }
+}
+
+/**
+ * Check Admin Role Permissions
+ */
+function hasRole($required_roles) {
+    if (!isset($_SESSION['admin_role'])) return false;
+    if (is_string($required_roles)) {
+        return $_SESSION['admin_role'] === $required_roles || $_SESSION['admin_role'] === 'super_admin';
+    }
+    return in_array($_SESSION['admin_role'], $required_roles) || $_SESSION['admin_role'] === 'super_admin';
+}
+
+/**
+ * RBAC Permission Helpers
+ */
+function canRead() {
+    return isLoggedIn(); // All admins can read
+}
+
+function canEdit() {
+    return hasRole(['editor', 'manager', 'super_admin']);
+}
+
+function canManage() {
+    return hasRole(['manager', 'super_admin']);
+}
+
+function isSuperAdmin() {
+    return isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'super_admin';
+}
 ?>

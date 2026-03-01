@@ -30,6 +30,8 @@ if (isLoggedIn()) {
                     <i class="fas fa-align-left"></i>
                 </button>
                 <div class="ms-auto d-flex align-items-center">
+                    <img src="<?php echo (!empty($_SESSION['admin_photo'])) ? '/MHTM/uploads/admins/' . $_SESSION['admin_photo'] : '/MHTM/assets/img/default-admin.png'; ?>" 
+                         class="rounded-circle me-2 border" width="30" height="30" style="object-fit: cover;">
                     <span class="me-3 d-none d-md-inline">Welcome, <strong><?php echo $_SESSION['admin_name']; ?></strong></span>
                     <a href="/MHTM/logout.php" class="btn btn-outline-danger btn-sm rounded-pill">Logout</a>
                 </div>

@@ -21,6 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['admin_id'] = $admin['id'];
         $_SESSION['admin_name'] = $admin['full_name'];
         $_SESSION['admin_username'] = $admin['username'];
+        $_SESSION['admin_role'] = $admin['role'];
+        $_SESSION['admin_photo'] = $admin['photo'];
+        
+        logActivity($pdo, $admin['id'], 'Login', 'Admin logged into the system');
+        
         redirect('dashboard.php');
     } else {
         $error = "Invalid username or password!";

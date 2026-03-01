@@ -12,6 +12,10 @@ $page_title = "Tenant Management";
 // Handle Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_tenant'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('tenants.php');
+        }
         $full_name = sanitize($_POST['full_name']);
         $phone = sanitize($_POST['phone']);
         $email = sanitize($_POST['email']);
@@ -47,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$house_id]);
             }
             $pdo->commit();
+            logActivity($pdo, $_SESSION['admin_id'], 'Add Tenant', "Added new tenant: $full_name");
             setFlash('success', 'Tenant added successfully!');
         } catch (PDOException $e) {
             $pdo->rollBack();
@@ -55,6 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['edit_tenant'])) {
+        if (!canEdit()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('tenants.php');
+        }
         $id = $_POST['tenant_id'];
         $full_name = sanitize($_POST['full_name']);
         $phone = sanitize($_POST['phone']);
@@ -102,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $pdo->commit();
+            logActivity($pdo, $_SESSION['admin_id'], 'Edit Tenant', "Updated details for tenant: $full_name (ID: $id)");
             setFlash('success', 'Tenant updated successfully!');
         } catch (PDOException $e) {
             $pdo->rollBack();
@@ -110,6 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_POST['delete_tenant'])) {
+        if (!canManage()) {
+            setFlash('danger', 'Unauthorized action!');
+            redirect('tenants.php');
+        }
         $id = $_POST['tenant_id'];
         $house_id = $_POST['house_id'];
         try {
@@ -167,9 +181,11 @@ include '../includes/header.php';
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Tenants</h2>
     <div class="d-flex gap-2">
+        <?php if (canManage()): ?>
          <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addTenantModal">
             <i class="fas fa-user-plus me-2"></i> Add New Tenant
         </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -252,6 +268,7 @@ include '../includes/header.php';
                                 <a href="../reports/contract.php?id=<?php echo $tenant['id']; ?>" class="btn btn-sm btn-outline-secondary" title="Download Contract" target="_blank">
                                     <i class="fas fa-file-contract"></i>
                                 </a>
+                                <?php if (canEdit()): ?>
                                 <button class="btn btn-sm btn-outline-primary edit-tenant-btn" 
                                     data-bs-toggle="modal" 
                                     data-bs-target="#editTenantModal"
@@ -264,14 +281,18 @@ include '../includes/header.php';
                                     data-start_date="<?php echo $tenant['start_date']; ?>"
                                     data-end_date="<?php echo $tenant['end_date']; ?>"
                                     data-status="<?php echo $tenant['status']; ?>">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger delete-tenant-btn" 
-                                    data-id="<?php echo $tenant['id']; ?>"
-                                    data-house_id="<?php echo $tenant['house_id']; ?>"
-                                    data-name="<?php echo $tenant['full_name']; ?>">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <?php endif; ?>
+                                <?php if (canManage()): ?>
+                                <button class="btn btn-sm btn-outline-danger delete-tenant-btn" 
+                                        data-id="<?php echo $tenant['id']; ?>"
+                                        data-house_id="<?php echo $tenant['house_id']; ?>"
+                                        data-name="<?php echo $tenant['full_name']; ?>">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>

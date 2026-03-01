@@ -99,14 +99,12 @@ $rent_3_months = $rent_per_month * 3;
 
     <div class="footer-signature">
         <div class="signature-box">
-            JINA LA MPANGAJI
-            <div class="sig-line"><?php echo $tenant['full_name']; ?></div>
-            SAHIHI: ..............................
+            <div class="sig-line">Sahihi ya Mpangaji</div>
+            <div style="margin-top: 10px; text-align: left;">Jina: <strong><?php echo $tenant['full_name']; ?></strong></div>
         </div>
         <div class="signature-box">
-            JINA LA MWENYE NYUMBA
-            <div class="sig-line"><?php echo $landlord['name']; ?></div>
-            SAHIHI: ..............................
+            <div class="sig-line">Sahihi ya Mwenye Nyumba</div>
+            <div style="margin-top: 10px; text-align: left;">Jina: <strong><?php echo $landlord['name']; ?></strong></div>
         </div>
     </div>
 </div>

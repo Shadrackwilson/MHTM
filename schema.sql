@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS admins (
     password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100),
+    role ENUM('viewer', 'editor', 'manager', 'super_admin') DEFAULT 'viewer',
+    photo VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -104,7 +106,7 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 -- Initial Data
-INSERT INTO admins (username, password, full_name, email) 
-VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Admin', 'admin@mhtm.com'); -- pass: password
+INSERT INTO admins (username, password, full_name, email, role) 
+VALUES ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Admin', 'admin@mhtm.com', 'super_admin'); -- pass: password
 
 INSERT INTO settings (system_name) VALUES ('MWAKASEGE HOUSE TENANT MANAGEMENT (MHTM)');

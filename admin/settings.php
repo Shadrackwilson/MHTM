@@ -7,6 +7,12 @@ if (!isLoggedIn()) {
     redirect('../login.php');
 }
 
+// Security: Only super_admin can access system settings
+if (!isSuperAdmin()) {
+    setFlash('danger', 'Unauthorized access! Only Super Admins can change settings.');
+    redirect('profile.php');
+}
+
 $page_title = "System Settings";
 
 // Handle Form Submissions
