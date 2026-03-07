@@ -1,10 +1,10 @@
 <?php
 // config/db.php
 
-$host = 'localhost';
+$host = 'db';
 $dbname = 'mhtm_db';
 $username = 'root';
-$password = '';
+$password = 'rootpassword';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
