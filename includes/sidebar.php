@@ -47,18 +47,5 @@
             </a>
         </li>
         <?php endif; ?>
-        <li class="mt-4"><hr class="bg-light"></li>
-        <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : ''; ?>">
-            <a href="/MHTM/admin/profile.php">
-                <i class="fas fa-user-circle"></i> My Profile
-            </a>
-        </li>
-        <?php if (isSuperAdmin()): ?>
-        <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage_admins.php' ? 'active' : ''; ?>">
-            <a href="/MHTM/admin/manage_admins.php">
-                <i class="fas fa-user-shield"></i> Manage Admins
-            </a>
-        </li>
-        <?php endif; ?>
     </ul>
 </nav>
